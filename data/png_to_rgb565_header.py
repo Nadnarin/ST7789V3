@@ -1,0 +1,55 @@
+from PIL import Image
+import sys
+import os
+
+# === Input / output settings ===
+png_path = "your_image_240x280.png"    # Source PNG image file
+out_header = "my_image_240x280.h"      # Output header file (.h)
+sym_name = "myImage240x280"            # Symbol name for the array in C
+W, H = 240, 280                        # Target dimensions for the display
+
+# Function to convert RGB888 (8-bit per channel) into RGB565 (16-bit)
+def rgb888_to_565(r, g, b):
+    # Red   -> keep top 5 bits (mask 0xF8, then shift to bits 11-15)
+    # Green -> keep top 6 bits (mask 0xFC, then shift to bits 5-10)
+    # Blue  -> keep top 5 bits (shift down to bits 0-4)
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+
+# === Load image ===
+im = Image.open(png_path).convert("RGBA")  # Ensure 4 channels (R,G,B,A)
+
+# Resize if dimensions don’t match target
+if im.size != (W, H):
+    im = im.resize((W, H), Image.LANCZOS)  # High-quality resampling
+
+# === Convert pixels ===
+pixels = list(im.getdata())   # Get list of all pixels [(r,g,b,a), ...]
+rgb565 = []                   # Will store converted 16-bit values
+
+for (r, g, b, a) in pixels:
+    # Convert each pixel (ignore alpha channel)
+    rgb565.append(rgb888_to_565(r, g, b))
+
+# === Write output C header ===
+with open(out_header, "w") as f:
+    # Write header guards and include PROGMEM
+    f.write("#pragma once\n")
+    f.write("#include <pgmspace.h>\n\n")
+
+    # Write image dimensions as defines
+    f.write(f"#define MYIMG_W {W}\n")
+    f.write(f"#define MYIMG_H {H}\n\n")
+
+    # Declare constant array stored in Flash memory
+    f.write(f"const uint16_t {sym_name}[] PROGMEM = {{\n")
+
+    # Write pixel data in chunks of 16 per line for readability
+    for i in range(0, len(rgb565), 16):
+        chunk = rgb565[i:i+16]
+        line = ", ".join(f"0x{val:04X}" for val in chunk)
+        f.write("  " + line + ",\n")
+
+    f.write("};\n")
+
+# Print summary message
+print(f"wrote {out_header} with {len(rgb565)} pixels.")
