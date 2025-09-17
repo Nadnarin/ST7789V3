@@ -1,0 +1,46 @@
+# save as png_to_rgb565_header.py
+from PIL import Image
+import sys
+import os
+
+# ==== ตั้งชื่อไฟล์ต้นฉบับ/ปลายทาง ====
+png_path = "your_image_240x280.png"   # <-- ใส่ไฟล์ PNG ของคุณ
+out_header = "my_image_240x280.h"
+sym_name = "myImage240x280"
+W, H = 240, 280
+
+def rgb888_to_565(r, g, b):
+    # RGB565 (MSB first) แบบปกติสำหรับจอ ST7789
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+
+# ถ้าเจอว่าบอร์ดของคุณสลับสี R/B ให้ใช้เวอร์ชันนี้แทน:
+# def rgb888_to_565(r, g, b):
+#     # สลับ R<->B
+#     return ((b & 0xF8) << 8) | ((g & 0xFC) << 3) | (r >> 3)
+
+im = Image.open(png_path).convert("RGBA")
+if im.size != (W, H):
+    im = im.resize((W, H), Image.LANCZOS)
+
+pixels = list(im.getdata())
+rgb565 = []
+for (r, g, b, a) in pixels:
+    # ออปชัน: ถ้าอยากทำพื้นหลังโปร่งใสให้เป็นสีดำ ให้เช็ค a==0 แล้วเซ็ต r=g=b=0
+    rgb565.append(rgb888_to_565(r, g, b))
+
+# สร้าง header
+with open(out_header, "w") as f:
+    f.write("#pragma once\n")
+    f.write("#include <pgmspace.h>\n\n")
+    f.write(f"#define MYIMG_W {W}\n")
+    f.write(f"#define MYIMG_H {H}\n\n")
+    f.write(f"const uint16_t {sym_name}[] PROGMEM = {{\n")
+
+    # เขียนเป็นบรรทัดละ 16 ค่าอ่านง่าย
+    for i in range(0, len(rgb565), 16):
+        chunk = rgb565[i:i+16]
+        line = ", ".join(f"0x{val:04X}" for val in chunk)
+        f.write("  " + line + ",\n")
+    f.write("};\n")
+
+print(f"wrote {out_header} with {len(rgb565)} pixels.")
