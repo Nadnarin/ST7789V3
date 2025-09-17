@@ -28,4 +28,5 @@ W, H = 240, 280                        # Target dimensions for the display
 6. copy file my_image_240x280.h same folder display.ino
 7. upload display.ino
 
+## Result
 
