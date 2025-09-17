@@ -29,6 +29,8 @@ W, H = 240, 280                        # Target dimensions for the display
 7. upload `display.ino`
 
 ## Result
-![Demo Screenshot](1.png)
-![Demo Screenshot](2.png)
 
+<p align="center">
+  <img src="images/1.jpg" width="300" /><br/>
+  <img src="images/2.jpg" width="300" />
+</p>
