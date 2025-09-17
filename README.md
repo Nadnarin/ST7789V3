@@ -23,10 +23,10 @@ W, H = 240, 280                        # Target dimensions for the display
 1. Set name PNG file from your image
 2. Run in `cmd` pip install pillow
 3. Set your address by `cd`
-4. python png_to_rgb565_header.py
-5. A file my_image_240x280.h will be created.
-6. copy file my_image_240x280.h same folder display.ino
-7. upload display.ino
+4. python `png_to_rgb565_header.py`
+5. A file `my_image_240x280.h` will be created.
+6. copy file `my_image_240x280.h` same folder `display.ino`
+7. upload `display.ino`
 
 ## Result
 
